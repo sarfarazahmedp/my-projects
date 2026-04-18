@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Quiz App</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    :root{--primary:#6C63FF;--dark:#0f0f1a;--card:#1a1a2e;--text:#e0e0e0;--muted:#888;--green:#00e676;--red:#ff5252;--yellow:#ffd740;}
+    body{background:var(--dark);color:var(--text);font-family:'Segoe UI',sans-serif;min-height:100vh;}
+    header{background:var(--card);padding:1rem 2rem;display:flex;align-items:center;gap:1rem;border-bottom:1px solid #ffffff10;}
+    header a{color:var(--muted);text-decoration:none;font-size:0.9rem;}
+    header a:hover{color:var(--primary);}
+    header h1{font-size:1.3rem;color:var(--primary);}
+    .badge{background:#6C63FF22;color:var(--primary);padding:3px 10px;border-radius:20px;font-size:0.75rem;margin-left:0.5rem;}
+    .container{max-width:640px;margin:3rem auto;padding:0 1.5rem;}
+    .panel{background:var(--card);border-radius:16px;padding:2rem;border:1px solid #ffffff0f;}
+
+    /* START SCREEN */
+    #start-screen{text-align:center;}
+    #start-screen h2{font-size:2rem;margin-bottom:0.5rem;}
+    #start-screen p{color:var(--muted);margin-bottom:2rem;}
+    input[type=text]{background:#0f0f1a;border:1px solid #ffffff15;color:var(--text);padding:0.65rem 1rem;border-radius:8px;font-size:0.9rem;width:100%;outline:none;margin-bottom:1rem;}
+    input:focus{border-color:var(--primary);}
+    .cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.8rem;margin-bottom:1.5rem;}
+    .cat-btn{padding:0.7rem;border-radius:10px;border:1px solid #ffffff15;background:transparent;color:var(--text);cursor:pointer;font-size:0.85rem;transition:all 0.2s;}
+    .cat-btn.selected{border-color:var(--primary);background:#6C63FF22;color:var(--primary);}
+    .btn{width:100%;padding:0.8rem;border:none;border-radius:10px;font-size:1rem;cursor:pointer;font-weight:700;transition:all 0.2s;}
+    .btn-primary{background:var(--primary);color:#fff;}
+    .btn-primary:hover{opacity:0.9;transform:translateY(-2px);}
+    .btn-outline{background:transparent;border:1px solid var(--primary);color:var(--primary);margin-top:0.8rem;}
+    .btn-outline:hover{background:var(--primary);color:#fff;}
+
+    /* QUIZ SCREEN */
+    #quiz-screen{display:none;}
+    .progress-bar{height:5px;background:#ffffff10;border-radius:5px;margin-bottom:1.5rem;overflow:hidden;}
+    .progress-fill{height:100%;background:var(--primary);border-radius:5px;transition:width 0.4s;}
+    .quiz-meta{display:flex;justify-content:space-between;font-size:0.82rem;color:var(--muted);margin-bottom:1.2rem;}
+    .timer{color:var(--yellow);font-weight:700;}
+    .timer.danger{color:var(--red);}
+    .question{font-size:1.1rem;font-weight:600;margin-bottom:1.5rem;line-height:1.5;}
+    .options{display:grid;gap:0.7rem;}
+    .opt{padding:0.8rem 1.2rem;border-radius:10px;border:1px solid #ffffff15;background:#0f0f1a;color:var(--text);cursor:pointer;font-size:0.9rem;text-align:left;transition:all 0.2s;}
+    .opt:hover:not(:disabled){border-color:var(--primary);background:#6C63FF11;}
+    .opt.correct{border-color:var(--green);background:#00e67615;color:var(--green);}
+    .opt.wrong{border-color:var(--red);background:#ff525215;color:var(--red);}
+    .opt:disabled{cursor:default;}
+
+    /* RESULT SCREEN */
+    #result-screen{display:none;text-align:center;}
+    .score-ring{width:120px;height:120px;border-radius:50%;margin:0 auto 1.5rem;display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:800;border:4px solid var(--primary);}
+    .result-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0.8rem;margin:1.5rem 0;}
+    .rs{background:#ffffff05;border-radius:10px;padding:0.8rem;}
+    .rs .num{font-size:1.5rem;font-weight:700;color:var(--primary);}
+    .rs .lbl{font-size:0.75rem;color:var(--muted);margin-top:4px;}
+    .grade-badge{display:inline-block;padding:6px 20px;border-radius:30px;font-weight:700;font-size:1rem;margin-bottom:1rem;}
+  </style>
+</head>
+<body>
+<header>
+  <a href="index.html">← Back to Portfolio</a>
+  <h1>🐍 Quiz Application <span class="badge">Python</span></h1>
+</header>
+
+<div class="container">
+  <div class="panel">
+
+    <!-- START -->
+    <div id="start-screen">
+      <h2>🎯 Quiz App</h2>
+      <p>Test your knowledge — choose a category and go!</p>
+      <input type="text" id="playerName" placeholder="Enter your name..." maxlength="20"/>
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:0.6rem;">Select Category:</p>
+      <div class="cat-grid">
+        <button class="cat-btn selected" onclick="selectCat('Python',this)">🐍 Python</button>
+        <button class="cat-btn" onclick="selectCat('GK',this)">🌍 Gen Knowledge</button>
+        <button class="cat-btn" onclick="selectCat('Math',this)">🔢 Math</button>
+      </div>
+      <button class="btn btn-primary" onclick="startQuiz()">Start Quiz ▶</button>
+    </div>
+
+    <!-- QUIZ -->
+    <div id="quiz-screen">
+      <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+      <div class="quiz-meta">
+        <span id="q-counter">Q 1/5</span>
+        <span id="score-live">Score: 0</span>
+        <span class="timer" id="timer">⏱ 15s</span>
+      </div>
+      <div class="question" id="question-text"></div>
+      <div class="options" id="options-container"></div>
+    </div>
+
+    <!-- RESULT -->
+    <div id="result-screen">
+      <div class="score-ring" id="score-ring">0%</div>
+      <div class="grade-badge" id="grade-badge"></div>
+      <h3 id="result-name" style="margin-bottom:0.3rem;"></h3>
+      <div class="result-stats">
+        <div class="rs"><div class="num" id="r-correct">0</div><div class="lbl">Correct</div></div>
+        <div class="rs"><div class="num" id="r-wrong">0</div><div class="lbl">Wrong</div></div>
+        <div class="rs"><div class="num" id="r-score">0</div><div class="lbl">Points</div></div>
+      </div>
+      <button class="btn btn-primary" onclick="restartQuiz()">Play Again 🔄</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const QUESTIONS = {
+  Python:[
+    {q:"Which keyword defines a function in Python?",opts:["func","def","define","function"],ans:"def"},
+    {q:"What does len([1,2,3]) return?",opts:["2","3","4","Error"],ans:"3"},
+    {q:"Which symbol is used for comments?",opts:["//","/*","#","--"],ans:"#"},
+    {q:"What type is 3/2 in Python 3?",opts:["int","float","double","str"],ans:"float"},
+    {q:"Which loop does NOT exist in Python?",opts:["for","while","do-while","nested"],ans:"do-while"},
+  ],
+  GK:[
+    {q:"Capital of Pakistan?",opts:["Lahore","Karachi","Islamabad","Peshawar"],ans:"Islamabad"},
+    {q:"How many continents?",opts:["5","6","7","8"],ans:"7"},
+    {q:"Planet closest to Sun?",opts:["Venus","Earth","Mars","Mercury"],ans:"Mercury"},
+    {q:"Who invented telephone?",opts:["Edison","Bell","Tesla","Newton"],ans:"Bell"},
+    {q:"Largest ocean?",opts:["Atlantic","Indian","Arctic","Pacific"],ans:"Pacific"},
+  ],
+  Math:[
+    {q:"Square root of 144?",opts:["10","11","12","13"],ans:"12"},
+    {q:"15% of 200?",opts:["25","30","35","40"],ans:"30"},
+    {q:"Degrees in a right angle?",opts:["45","60","90","180"],ans:"90"},
+    {q:"Value of 2^10?",opts:["512","1024","2048","256"],ans:"1024"},
+    {q:"Approximate value of Pi?",opts:["3.12","3.14","3.16","3.18"],ans:"3.14"},
+  ]
+};
+
+let selectedCat='Python', playerName='', questions=[], qIdx=0, score=0, correct=0, timer=null, timeLeft=15;
+
+function selectCat(cat, el){
+  selectedCat=cat;
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function startQuiz(){
+  playerName=document.getElementById('playerName').value.trim()||'Player';
+  questions=[...QUESTIONS[selectedCat]].sort(()=>Math.random()-0.5);
+  qIdx=0; score=0; correct=0;
+  document.getElementById('start-screen').style.display='none';
+  document.getElementById('quiz-screen').style.display='block';
+  showQuestion();
+}
+
+function showQuestion(){
+  if(qIdx>=questions.length){endQuiz();return;}
+  const q=questions[qIdx];
+  document.getElementById('q-counter').textContent=`Q ${qIdx+1}/${questions.length}`;
+  document.getElementById('score-live').textContent=`Score: ${score}`;
+  document.getElementById('progress').style.width=((qIdx/questions.length)*100)+'%';
+  document.getElementById('question-text').textContent=q.q;
+
+  const opts=[...q.opts].sort(()=>Math.random()-0.5);
+  const container=document.getElementById('options-container');
+  container.innerHTML=opts.map(o=>`<button class="opt" onclick="answer(this,'${o}','${q.ans}')">${o}</button>`).join('');
+
+  startTimer();
+}
+
+function startTimer(){
+  clearInterval(timer); timeLeft=15;
+  updateTimer();
+  timer=setInterval(()=>{
+    timeLeft--;
+    updateTimer();
+    if(timeLeft<=0){clearInterval(timer);timeoutQ();}
+  },1000);
+}
+
+function updateTimer(){
+  const el=document.getElementById('timer');
+  el.textContent=`⏱ ${timeLeft}s`;
+  el.className='timer'+(timeLeft<=5?' danger':'');
+}
+
+function timeoutQ(){
+  document.querySelectorAll('.opt').forEach(b=>{
+    b.disabled=true;
+    if(b.textContent===questions[qIdx].ans) b.classList.add('correct');
+  });
+  setTimeout(nextQ,1200);
+}
+
+function answer(btn, chosen, correct_ans){
+  clearInterval(timer);
+  document.querySelectorAll('.opt').forEach(b=>b.disabled=true);
+  if(chosen===correct_ans){
+    btn.classList.add('correct');
+    const bonus=Math.max(0,Math.floor(timeLeft/3));
+    score+=1+bonus; correct++;
+    document.getElementById('score-live').textContent=`Score: ${score}`;
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('.opt').forEach(b=>{
+      if(b.textContent===correct_ans) b.classList.add('correct');
+    });
+  }
+  setTimeout(nextQ,1200);
+}
+
+function nextQ(){qIdx++;showQuestion();}
+
+function endQuiz(){
+  clearInterval(timer);
+  document.getElementById('quiz-screen').style.display='none';
+  document.getElementById('result-screen').style.display='block';
+
+  const total=questions.length;
+  const pct=Math.round(correct/total*100);
+  const wrong=total-correct;
+
+  document.getElementById('score-ring').textContent=pct+'%';
+  document.getElementById('r-correct').textContent=correct;
+  document.getElementById('r-wrong').textContent=wrong;
+  document.getElementById('r-score').textContent=score;
+  document.getElementById('result-name').textContent='Well done, '+playerName+'!';
+
+  const gb=document.getElementById('grade-badge');
+  if(pct>=90){gb.textContent='🌟 Excellent — Grade A';gb.style.background='#00e67622';gb.style.color='#00e676';}
+  else if(pct>=75){gb.textContent='👍 Good Job — Grade B';gb.style.background='#6C63FF22';gb.style.color='#6C63FF';}
+  else if(pct>=60){gb.textContent='📚 Keep Practicing — Grade C';gb.style.background='#ffd74022';gb.style.color='#ffd740';}
+  else{gb.textContent='💪 Study More — Grade F';gb.style.background='#ff525222';gb.style.color='#ff5252';}
+}
+
+function restartQuiz(){
+  document.getElementById('result-screen').style.display='none';
+  document.getElementById('start-screen').style.display='block';
+}
+</script>
+</body>
+</html>

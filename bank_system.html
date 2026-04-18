@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bank Account System</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    :root{--primary:#6C63FF;--dark:#0f0f1a;--card:#1a1a2e;--text:#e0e0e0;--muted:#888;--green:#00e676;--red:#ff5252;}
+    body{background:var(--dark);color:var(--text);font-family:'Segoe UI',sans-serif;min-height:100vh;}
+    header{background:var(--card);padding:1rem 2rem;display:flex;align-items:center;gap:1rem;border-bottom:1px solid #ffffff10;}
+    header a{color:var(--muted);text-decoration:none;font-size:0.9rem;}
+    header a:hover{color:var(--primary);}
+    header h1{font-size:1.3rem;color:var(--primary);}
+    .badge{background:#6C63FF22;color:var(--primary);padding:3px 10px;border-radius:20px;font-size:0.75rem;margin-left:0.5rem;}
+    .container{max-width:900px;margin:2rem auto;padding:0 1.5rem;}
+    .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem;}
+    .panel{background:var(--card);border-radius:12px;padding:1.5rem;border:1px solid #ffffff0f;}
+    .panel h2{font-size:0.85rem;color:var(--muted);margin-bottom:1.2rem;text-transform:uppercase;letter-spacing:1px;}
+    /* Account Card */
+    .acc-card{border-radius:12px;padding:1.5rem;margin-bottom:1rem;cursor:pointer;border:2px solid transparent;transition:all 0.2s;}
+    .acc-card.savings{background:linear-gradient(135deg,#1a1a3e,#2d1b69);}
+    .acc-card.current{background:linear-gradient(135deg,#1a2e1a,#0d3d0d);}
+    .acc-card.active{border-color:var(--primary);}
+    .acc-card .acc-type{font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;opacity:0.7;}
+    .acc-card .acc-name{font-size:1.1rem;font-weight:600;margin:0.3rem 0;}
+    .acc-card .acc-balance{font-size:1.8rem;font-weight:800;color:var(--green);}
+    .acc-card .acc-no{font-size:0.8rem;opacity:0.5;margin-top:0.5rem;}
+    /* Actions */
+    .action-tabs{display:flex;gap:0.5rem;margin-bottom:1.2rem;flex-wrap:wrap;}
+    .tab{padding:0.5rem 1rem;border-radius:8px;border:1px solid #ffffff15;background:transparent;color:var(--muted);cursor:pointer;font-size:0.85rem;transition:all 0.2s;}
+    .tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+    input{background:#0f0f1a;border:1px solid #ffffff15;color:var(--text);padding:0.65rem 1rem;border-radius:8px;font-size:0.9rem;width:100%;outline:none;margin-bottom:0.8rem;}
+    input:focus{border-color:var(--primary);}
+    .btn{width:100%;padding:0.7rem;border:none;border-radius:8px;font-size:0.9rem;cursor:pointer;font-weight:600;transition:all 0.2s;margin-top:0.3rem;}
+    .btn-primary{background:var(--primary);color:#fff;}
+    .btn-primary:hover{opacity:0.9;transform:translateY(-1px);}
+    /* History */
+    .history-list{max-height:280px;overflow-y:auto;}
+    .tx{display:flex;justify-content:space-between;align-items:center;padding:0.7rem 0;border-bottom:1px solid #ffffff08;}
+    .tx:last-child{border-bottom:none;}
+    .tx .tx-info{font-size:0.85rem;}
+    .tx .tx-type{font-size:0.75rem;color:var(--muted);}
+    .tx .tx-amt{font-size:0.95rem;font-weight:700;}
+    .tx.deposit .tx-amt{color:var(--green);}
+    .tx.withdraw .tx-amt{color:var(--red);}
+    .tx.transfer .tx-amt{color:var(--primary);}
+    .tx.interest .tx-amt{color:#ffd740;}
+    .empty-tx{color:var(--muted);text-align:center;padding:1.5rem;font-size:0.85rem;}
+    /* Msg */
+    .msg{padding:0.6rem 1rem;border-radius:8px;font-size:0.85rem;margin-bottom:0.8rem;display:none;}
+    .msg.success{background:#00e67615;color:var(--green);display:block;}
+    .msg.error{background:#ff525215;color:var(--red);display:block;}
+  </style>
+</head>
+<body>
+<header>
+  <a href="index.html">← Back to Portfolio</a>
+  <h1>☕ Bank Account System <span class="badge">Java OOP</span></h1>
+</header>
+
+<div class="container">
+  <div class="grid2">
+
+    <!-- LEFT: Accounts + Actions -->
+    <div>
+      <!-- Savings Account Card -->
+      <div class="acc-card savings active" id="card-savings" onclick="switchAccount('savings')">
+        <div class="acc-type">Savings Account</div>
+        <div class="acc-name">Ali Ahmed</div>
+        <div class="acc-balance" id="bal-savings">Rs 50,000</div>
+        <div class="acc-no">ACC# 1001 &nbsp;|&nbsp; Interest: 5%</div>
+      </div>
+      <!-- Current Account Card -->
+      <div class="acc-card current" id="card-current" onclick="switchAccount('current')">
+        <div class="acc-type">Current Account</div>
+        <div class="acc-name">Sara Khan</div>
+        <div class="acc-balance" id="bal-current">Rs 30,000</div>
+        <div class="acc-no">ACC# 1002 &nbsp;|&nbsp; Overdraft: Rs 10,000</div>
+      </div>
+
+      <!-- Actions Panel -->
+      <div class="panel">
+        <h2>Actions — <span id="active-acc-label" style="color:var(--primary)">Savings</span></h2>
+        <div class="action-tabs">
+          <button class="tab active" onclick="setTab('deposit',this)">Deposit</button>
+          <button class="tab" onclick="setTab('withdraw',this)">Withdraw</button>
+          <button class="tab" onclick="setTab('transfer',this)">Transfer</button>
+          <button class="tab" onclick="setTab('interest',this)">Interest</button>
+        </div>
+        <div id="msg" class="msg"></div>
+
+        <div id="tab-deposit">
+          <input id="dep-amt" type="number" placeholder="Enter amount (Rs)"/>
+          <button class="btn btn-primary" onclick="doDeposit()">💰 Deposit</button>
+        </div>
+        <div id="tab-withdraw" style="display:none">
+          <input id="wit-amt" type="number" placeholder="Enter amount (Rs)"/>
+          <button class="btn btn-primary" onclick="doWithdraw()">🏧 Withdraw</button>
+        </div>
+        <div id="tab-transfer" style="display:none">
+          <p style="font-size:0.8rem;color:var(--muted);margin-bottom:0.6rem">Transfer to other account</p>
+          <input id="tra-amt" type="number" placeholder="Enter amount (Rs)"/>
+          <button class="btn btn-primary" onclick="doTransfer()">↔️ Transfer</button>
+        </div>
+        <div id="tab-interest" style="display:none">
+          <p style="font-size:0.82rem;color:var(--muted);margin-bottom:0.8rem">Add 5% annual interest to Savings account only.</p>
+          <button class="btn btn-primary" onclick="doInterest()">📈 Add Interest</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Transaction History -->
+    <div class="panel">
+      <h2>📜 Transaction History</h2>
+      <div class="history-list" id="historyList">
+        <div class="empty-tx">No transactions yet.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const accounts = {
+    savings: { name:'Ali Ahmed',  balance:50000, overdraft:0,     rate:5,   history:[] },
+    current: { name:'Sara Khan',  balance:30000, overdraft:10000, rate:0,   history:[] }
+  };
+  let activeAcc = 'savings';
+  let activeTab = 'deposit';
+
+  function fmt(n){ return 'Rs ' + n.toLocaleString('en-PK',{minimumFractionDigits:0,maximumFractionDigits:0}); }
+
+  function switchAccount(acc){
+    activeAcc = acc;
+    document.getElementById('card-savings').classList.toggle('active', acc==='savings');
+    document.getElementById('card-current').classList.toggle('active', acc==='current');
+    document.getElementById('active-acc-label').textContent = acc==='savings'?'Savings':'Current';
+    renderHistory(); showMsg('');
+  }
+
+  function setTab(tab, el){
+    activeTab = tab;
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+    ['deposit','withdraw','transfer','interest'].forEach(t=>{
+      document.getElementById('tab-'+t).style.display = t===tab?'block':'none';
+    });
+    showMsg('');
+  }
+
+  function showMsg(msg, type='success'){
+    const el = document.getElementById('msg');
+    el.textContent = msg;
+    el.className = 'msg ' + (msg ? type : '');
+    if(!msg) el.style.display='none';
+  }
+
+  function addTx(accKey, type, amount, note=''){
+    const time = new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});
+    accounts[accKey].history.unshift({type, amount, note, time});
+    updateBalanceDisplay();
+    renderHistory();
+  }
+
+  function updateBalanceDisplay(){
+    document.getElementById('bal-savings').textContent = fmt(accounts.savings.balance);
+    document.getElementById('bal-current').textContent = fmt(accounts.current.balance);
+  }
+
+  function doDeposit(){
+    const amt = parseFloat(document.getElementById('dep-amt').value);
+    if(!amt||amt<=0){showMsg('Enter a valid amount!','error');return;}
+    accounts[activeAcc].balance += amt;
+    addTx(activeAcc,'deposit',amt,'Deposited');
+    showMsg('✅ Rs '+amt.toLocaleString()+' deposited!');
+    document.getElementById('dep-amt').value='';
+  }
+
+  function doWithdraw(){
+    const amt = parseFloat(document.getElementById('wit-amt').value);
+    const acc = accounts[activeAcc];
+    if(!amt||amt<=0){showMsg('Enter a valid amount!','error');return;}
+    if(amt > acc.balance + acc.overdraft){showMsg('❌ Insufficient balance!','error');return;}
+    acc.balance -= amt;
+    addTx(activeAcc,'withdraw',amt,'Withdrawn');
+    showMsg('✅ Rs '+amt.toLocaleString()+' withdrawn!');
+    document.getElementById('wit-amt').value='';
+  }
+
+  function doTransfer(){
+    const amt = parseFloat(document.getElementById('tra-amt').value);
+    const from = activeAcc;
+    const to   = activeAcc==='savings'?'current':'savings';
+    const acc  = accounts[from];
+    if(!amt||amt<=0){showMsg('Enter a valid amount!','error');return;}
+    if(amt > acc.balance + acc.overdraft){showMsg('❌ Insufficient balance!','error');return;}
+    accounts[from].balance -= amt;
+    accounts[to].balance   += amt;
+    addTx(from,'transfer',amt,'Sent to '+accounts[to].name);
+    accounts[to].history.unshift({type:'deposit',amount:amt,note:'Received from '+acc.name,time:new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'})});
+    showMsg('✅ Rs '+amt.toLocaleString()+' transferred to '+accounts[to].name+'!');
+    document.getElementById('tra-amt').value='';
+    updateBalanceDisplay();
+  }
+
+  function doInterest(){
+    if(activeAcc!=='savings'){showMsg('⚠️ Only Savings account earns interest!','error');return;}
+    const interest = Math.round(accounts.savings.balance * 0.05);
+    accounts.savings.balance += interest;
+    addTx('savings','interest',interest,'5% Annual Interest');
+    showMsg('📈 Interest Rs '+interest.toLocaleString()+' added!');
+  }
+
+  function renderHistory(){
+    const list = document.getElementById('historyList');
+    const txs  = accounts[activeAcc].history;
+    if(!txs.length){list.innerHTML='<div class="empty-tx">No transactions yet.</div>';return;}
+    const icons = {deposit:'💰',withdraw:'💸',transfer:'↔️',interest:'📈'};
+    list.innerHTML = txs.map(t=>`
+      <div class="tx ${t.type}">
+        <div>
+          <div class="tx-info">${icons[t.type]||''} ${t.note}</div>
+          <div class="tx-type">${t.time}</div>
+        </div>
+        <div class="tx-amt ${t.type==='withdraw'||t.type==='transfer'?'withdraw':''}">${t.type==='withdraw'||t.type==='transfer'?'-':'+'}${fmt(t.amount)}</div>
+      </div>`).join('');
+  }
+</script>
+</body>
+</html>
